@@ -1,6 +1,7 @@
 import math
 import random
 
+
 def grid(xrows, yrows, width, height):
     points = []
     xspan = width / xrows
@@ -10,7 +11,8 @@ def grid(xrows, yrows, width, height):
             points.append({"x": xpoints * xspan, "y": ypoints * yspan})
     return points
 
-def butterflyCurve(origin, scale, loops, lamb):
+
+def butterfly(origin, scale, loops, lamb):
     points = []
     stepSize = 0.025
     upperLimit = loops * math.pi
@@ -22,6 +24,7 @@ def butterflyCurve(origin, scale, loops, lamb):
         t += stepSize
         points.append((x * scale + origin[0], y * scale + origin[1]))
     return points
+
 
 def spiral(center, radius, coils, chord, maxpoints, f=None):
     points = []
@@ -44,7 +47,7 @@ def spiral(center, radius, coils, chord, maxpoints, f=None):
     return points
 
 
-def ruleOfThirds(start, width, height):
+def thirds(start, width, height):
     rulePoints = []
     thirdWidth = width / 3
     thirdHeight = height / 3
@@ -55,17 +58,20 @@ def ruleOfThirds(start, width, height):
     rulePoints.append(thirdWidth + x, thirdHeight * 2 + y)
     return rulePoints
 
+
 def cols(origin, interCol, width):
     points = []
     for i in range(origin[0], width, interCol):
         points.append((i, origin[1]))
     return points
 
+
 def rows(origin, interRow, height):
     points = []
     for i in range(origin[1], height, interRow):
         points.append((origin[0], i))
     return points
+
 
 def hypo(origin, scale, loops, k):
     result = []
@@ -78,7 +84,8 @@ def hypo(origin, scale, loops, k):
         result.append((x,y))
     return result
 
-def flightWalker(mu, lowerLimit, upperLimit):
+
+def flightwalker(mu, lowerLimit, upperLimit):
     x = random.Random().uniform(-math.PI/2, math.PI/2)
     y = -math.log(random.Random().random())
     alpha = mu - 1.0
