@@ -1,2 +1,2 @@
 # ay
-Tiny framework to run generative art using Python
+Simple framework to create images in Python
