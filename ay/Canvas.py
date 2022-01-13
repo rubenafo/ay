@@ -2,7 +2,7 @@ import math
 import random
 import uuid
 
-import pixie
+import skia
 from colour import Color
 
 from ay.Point import Point
@@ -14,8 +14,9 @@ class Canvas:
     def __init__(self, width=1000, height=1000, seed=random.Random().randint(0,10000)):
         self.seed = seed
         self.rand = random.Random(x=seed)
-        self.canvas: pixie.Image = pixie.Image(width, height)
-        self.canvas.fill(pixie.parse_color("#FFFFFF"))
+        self.surface: skia.Surface = skia.Surface(width, height)
+        self.canvas: skia.Canvas = self.surface.getCanvas()
+        self.canvas.clear(skia.ColorWHITE)
         self.items: list[Shape] = []
 
     def rnd(self):
@@ -43,22 +44,21 @@ class Canvas:
 
     def draw(self):
         for i in self.items:
-            paint = pixie.Paint(pixie.PK_SOLID)
-            paint.color = pixie.Color(255, 45, 6, 0.2)
+            if 'fill' in i.style:
+                paint = skia.Paint()
+                paint.setStyle(skia.Paint.kFill_Style)
+                paint.setAntiAlias(True)
+                paint.setColor(i.style['fill'])
+                self.canvas.drawPath(i.draw(), paint)
+            if 'stroke' in i.style:
+                paint = skia.Paint()
+                paint.setStyle(skia.Paint.kStroke_Style)
+                paint.setStrokeWidth(i.style['stroke_width'])
+                paint.setColor(i.style['stroke'])
+                paint.setAntiAlias(True)
+                self.canvas.drawPath(i.draw(), paint)
 
-            #st = pixie.Paint(pixie.PK_SOLID)
-            #st.color = pixie.parse_color("#FF5C00")
-
-            ctx: pixie.Context = self.canvas.new_context()
-            ctx.stroke_style = paint
-            ctx.line_width = 10
-            ctx.path_stroke(i.draw())
-
-            #self.canvas.fill_path(i.draw(), st)
-
-            #self.canvas.stroke_path(i.draw(), paint)
-
-
-    def saveToFile(self, filename = uuid.uuid4().hex[:8]):
+    def save_file(self, filename = uuid.uuid4().hex[:8]):
         print(">> Saving to file: " + '' + str(filename) + '.png ...')
-        self.canvas.write_file(filename + ".png")
+        snapshot = self.surface.makeImageSnapshot()
+        snapshot.save(filename + ".png", skia.kPNG)
