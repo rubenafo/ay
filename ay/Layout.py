@@ -1,14 +1,19 @@
+from typing import List
+
 import math
 import random
 
+from ay.Point import Point
+from ay.rlist import rlist
 
-def grid(xrows, yrows, width, height):
-    points = []
+
+def grid(xrows, yrows, width, height) -> rlist[Point]:
+    points = rlist()
     xspan = width / xrows
     yspan = height / yrows
     for ypoints in range(1, yrows):
         for xpoints in range(1, xrows):
-            points.append({"x": xpoints * xspan, "y": ypoints * yspan})
+            points.append(Point(xpoints * xspan, ypoints * yspan))
     return points
 
 

@@ -1,3 +1,5 @@
 setuptools~=57.0.0
 colour~=0.1.5
 pixie-python
+colourlovers~=0.2.0
+numpy~=1.22.0
