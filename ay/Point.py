@@ -1,14 +1,25 @@
-import math
-
+import numpy as np
 import skia
 
 
 class Point(skia.Point):
 
-    def __init__(self, x=0, y=0):
-        skia.Point.__init__(self, x, y)
-        self.x = x
-        self.y = y
+    def __init__(self, *args):
+        skia.Point.__init__(self, *args)
+        self.x = self.x()
+        self.y = self.y()
+
+    def __sub__(self, other):
+        p = skia.Point.__sub__(self, other)
+        return Point(p.x(), p.y())
+
+    def __mul__(self, other):
+        p = skia.Point.__mul__(self, other)
+        return Point(p.x(), p.y())
+
+    def __add__(self, other):
+        p = skia.Point.__add__(self, other)
+        return Point(p.x(), p.y())
 
     def cp (self):
         return Point(self.x, self.y)
@@ -26,9 +37,9 @@ class Point(skia.Point):
         y = 0.5 * (3 * t1 * (p1.y * t1 - p2.y * t) + p3.y * t * t) - p0.y * t1 * t1 * t1
         tx = 3*t*t * (-p0.x+3*p1.x-3*p2.x+p3.x) + 6*t * (p0.x-2*p1.x+p2.x) + 3 * (-p0.x+p1.x)
         ty = 3*t*t * (-p0.y+3*p1.y-3*p2.y+p3.y) + 6*t * (p0.y-2*p1.y+p2.y) + 3 * (-p0.y+p1.y)
-        a = math.atan2(y, x)
-        a -= math.pi/2
-        return Point(math.cos(a) * width +x, math.sin(a) * width + y)
+        a = np.atan2(y, x)
+        a -= np.pi/2
+        return Point(np.cos(a) * width +x, np.sin(a) * width + y)
 
     @staticmethod
     def point_at (a, b, c, d, t: float):
@@ -41,13 +52,13 @@ class Point(skia.Point):
     def angle (p0, p1):
         xDiff = p0.x - p1.x
         yDiff = p0.y - p1.y
-        return math.atan2(yDiff, xDiff) * (180 / math.pi)
+        return np.atan2(yDiff, xDiff) * (180 / np.pi)
 
     @staticmethod
     def rotate (p, around, deg: float):
-        radians = deg * math.pi / 180
-        cos = math.cos(radians)
-        sin = math.sin(radians)
+        radians = deg * np.pi / 180
+        cos = np.cos(radians)
+        sin = np.sin(radians)
         dx = p.x - around.x
         dy = p.y - around.y
         newx = cos * dx - sin * dy + around.x
@@ -59,3 +70,9 @@ class Point(skia.Point):
         p = p1.copy().sub(0, offset)
         angle = Point.angle(p0, p1)
         return Point.rotate(p, p1, angle)
+
+    @staticmethod
+    def interpolate (p0, p1, step=0.5):
+        x = p0.x + (p1.x - p0.x) * step
+        y = p0.y + (p1.y - p0.y) * step
+        return Point(x, y)

@@ -20,3 +20,8 @@ class PointTests (unittest.TestCase):
         self.assertEqual(Point(50,50), p)
         p = Point.point_at(Point(100,100), Point(100,100), Point(1000,100), Point(1000,100), 0.2)
         self.assertEqual(Point(193.6, 100), p)
+
+    def test_interpolate (self):
+        self.assertEqual((10,10), Point.interpolate(Point(0,0), Point(20,20)))
+        self.assertEqual((-5,-5), Point.interpolate(Point(0,0), Point(-10,-10)))
+        self.assertEqual((10, 30), Point.interpolate(Point(10,10), Point(10,50)))

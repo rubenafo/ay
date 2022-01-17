@@ -1,10 +1,9 @@
-import skia
-from numpy import cos, sin
+import colour
+import numpy as np
+from skia import Path, Color4f
 
 from ay.Point import Point
-import colour
 from ay.Utils import resolve
-import numpy as np
 
 
 class Shape:
@@ -38,7 +37,7 @@ class Shape:
         fill = resolve(fill)
         alpha = resolve(alpha)
         color: colour.Color = colour.hex2rgb(fill)
-        self.style['fill'] = skia.Color4f(color[0], color[1], color[2], alpha)
+        self.style['fill'] = Color4f(color[0], color[1], color[2], alpha)
         return self
 
     def stroke (self, stroke_color: str, alpha=1, stroke_width=5):
@@ -46,7 +45,7 @@ class Shape:
         alpha = resolve(alpha)
         stroke_width = resolve(stroke_width)
         color: colour.Color = colour.hex2rgb(stroke_color)
-        self.style['stroke'] = skia.Color4f(color[0], color[1], color[2], alpha)
+        self.style['stroke'] = Color4f(color[0], color[1], color[2], alpha)
         self.style['stroke_width'] = stroke_width if stroke_width else None
         return self
 
@@ -70,14 +69,19 @@ class Shape:
 
     @staticmethod
     def rect (x: float, y: float, width: float, height: float):
+        """
+        rect (x, y, width, height)
+        rect (Point, width, height)
+        rect (Point, Point, width
+        """
         p0 = Point(x,y)
         p1 = Point (p0.x+width, p0.y)
         p2 = Point (p1.x, p1.y + height)
         p3 = Point (p0.x, p0.y + height)
-        return Shape.line(p0, p1).addPoint(p2).addPoint(p3).close()
+        return Shape.line(p0, p1).addPoint(p2).addPoint(p3).addPoint(p0)
 
-    def draw(self) -> skia.Path:
-        path = skia.Path()
+    def draw(self) -> Path:
+        path = Path()
         path.moveTo(self.pxs[0], self.pys[0])
         for i in range(1, len(self.pxs)-2, 2):
             path.cubicTo(self.pxs[i], self.pys[i],
@@ -104,3 +108,28 @@ class Shape:
         x = np.average([self.pxs[i] for i in range (0, len(self.pxs), 3)])
         y = np.average([self.pys[i] for i in range (0, len(self.pys), 3)])
         return Point(x,y)
+
+    def subd (self, t: float):
+        points: list[Point] = [Point(self.pxs[i], self.pys[i]) for i in range(0, len(self.pxs))]
+        new_points = [points[0]]
+        for i in range(0, len(self.pxs)-3, 3):
+            if i % 3 == 0:
+                a = points[i]
+                d = points[i+3]
+                b = points[i+1]
+                c = points[i+2]
+
+                e = ((b.cp() - a) * t) + a
+                f = ((c.cp() - b) * t) + b
+                g = ((d.cp() - c) * t) + c
+                h = ((f - e) * t) + e
+                j = ((g - f) * t) + f
+                k = ((j - h) * t) + h
+                new_points.extend([e,h,k])
+                new_points.extend([j,g,d])
+            # a e h k and k j g d
+            #new_points.add(a, e, h, k);
+            #new_points.add(k, j, g, d);
+        self.pxs = [p.x for p in new_points]
+        self.pys = [p.y for p in new_points]
+        return self
