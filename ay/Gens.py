@@ -1,6 +1,6 @@
 import numpy.random
 from numpy import random
-from ay.rlist import rlist
+from ay.plist import plist
 
 class Gens:
 
@@ -10,8 +10,12 @@ class Gens:
     def ct(x):
         return lambda: x
 
+    @staticmethod
+    def shape_alpha():
+        return lambda shape: shape.style['stroke'].fA
+
     def pick (self, arr):
-        return rlist(arr).rit()
+        return plist(arr).rit()
 
     def norm (self, n, d):
         return self.rnd.normal(n,d)

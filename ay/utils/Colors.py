@@ -1,13 +1,19 @@
 from colourlovers import clapi
+import colour
+
+from ay.plist import plist
 
 
-class Colors:
+def palette(pid=None):
+    cl = clapi.ColourLovers()
+    if pid:
+        pl = cl.search_palette(id=pid, format='json')
+    else:
+        pl = cl.search_palettes(request='random', format='json')
+    print(">> random palette: {}".format(pl[0].id))
+    return plist(map(lambda x: '#' + x, pl[0].colors))
 
-    def palette(self, pid=None):
-        cl = clapi.ColourLovers()
-        if pid:
-            pl = cl.search_palette(id=pid, format='json')
-        else:
-            pl = cl.search_palettes(request='random', format='json')
-        print(">> random palette: {}".format(pl[0].id))
-        return list(map(lambda x: '#' + x, pl[0].colors))
+
+def color(hex1, hex2, steps: int) -> list[str]:
+    return list(map(lambda x: x.hex, list(colour.Color(hex1).range_to(colour.Color(hex2), steps))))
+

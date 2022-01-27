@@ -1,13 +1,13 @@
 import unittest
 
 from ay.Point import Point
-from ay.rlist import rlist
+from ay.plist import plist
 
 
-class RListTests(unittest.TestCase):
+class PListTests(unittest.TestCase):
 
     def test_interpolate (self):
-        mylist = rlist([Point(0,0), Point(20, 30)])
+        mylist = plist([Point(0, 0), Point(20, 30)])
         points = mylist.interpolate()
         self.assertEqual(3, len(points))
-        self.assertEquals(Point(10, 15), points[1])
+        self.assertEqual(Point(10, 15), points[1])

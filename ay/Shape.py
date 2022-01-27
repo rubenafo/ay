@@ -2,31 +2,31 @@ import colour
 import numpy as np
 from skia import Path, Color4f
 
+from ay import Canvas, Utils
 from ay.Point import Point
 from ay.Utils import resolve
+from ay import Shapes
 
 
 class Shape:
 
-    def __init__(self):
-        self.pxs: list = []
-        self.pys: list = []
+    def __init__(self, start_point: Point = None):
+        self.head = start_point if start_point else None
+        self.segments: list = []
         self.closed = False
         self.zindex = 0
         self.style = {} # fill, stroke, stroke_width
 
-    def tail(self):
-        return self.pxs[-1], self.pys[-1]
+    def tail(self) -> Point:
+        return self.segments[-1]['p2']
 
     def addPoint(self, p: Point):
         last_point = self.tail()
-        self.pxs.extend([last_point[0], p.x, p.x])
-        self.pys.extend([last_point[1], p.y, p.y])
+        self.segments.append({'c1': p, 'c2': last_point, 'p2': p})
         return self
 
     def add(self, p0: Point, p1: Point, p2: Point):
-        self.pxs.append(p0.x, p1.x, p2.x)
-        self.pys.append(p0.y, p1.y, p2.y)
+        self.segments.append({'c1': p0, 'c2': p1, 'p2': p2})
         return self
 
     def close (self):
@@ -40,58 +40,33 @@ class Shape:
         self.style['fill'] = Color4f(color[0], color[1], color[2], alpha)
         return self
 
-    def stroke (self, stroke_color: str, alpha=1, stroke_width=5):
-        stroke_color = resolve(stroke_color)
+    def stroke (self, color: str, alpha=1, width=5):
+        stroke_color = resolve(color)
         alpha = resolve(alpha)
-        stroke_width = resolve(stroke_width)
+        stroke_width = resolve(width)
         color: colour.Color = colour.hex2rgb(stroke_color)
         self.style['stroke'] = Color4f(color[0], color[1], color[2], alpha)
         self.style['stroke_width'] = stroke_width if stroke_width else None
         return self
 
     @staticmethod
-    def curve (p0: Point, p1: Point, p2: Point, p3: Point):
-        s = Shape()
-        p0 = p0 if type(p0) == Point else Point(p0[0], p0[1])
-        p1 = p1 if type(p1) == Point else Point(p1[0], p1[1])
-        p2 = p2 if type(p2) == Point else Point(p2[0], p2[1])
-        p3 = p3 if type(p3) == Point else Point(p3[0], p3[1])
-        s.pxs = [p0.x, p1.x, p2.x, p3.x]
-        s.pys = [p0.y, p1.y, p2.y, p3.y]
-        s.closed = False
-        return s
-
-    @staticmethod
     def line (p0: Point = (0,0), p1: Point = (0,0)):
         p0 = p0 if type(p0) == Point else Point(p0[0], p0[1])
         p1 = p1 if type(p1) == Point else Point(p1[0], p1[1])
-        return Shape.curve(p0, p0, p1, p1)
-
-    @staticmethod
-    def rect (x: float, y: float, width: float, height: float):
-        """
-        rect (x, y, width, height)
-        rect (Point, width, height)
-        rect (Point, Point, width
-        """
-        p0 = Point(x,y)
-        p1 = Point (p0.x+width, p0.y)
-        p2 = Point (p1.x, p1.y + height)
-        p3 = Point (p0.x, p0.y + height)
-        return Shape.line(p0, p1).addPoint(p2).addPoint(p3).addPoint(p0)
+        return Shapes.curve(p0, p0, p1, p1)
 
     def draw(self) -> Path:
         path = Path()
-        path.moveTo(self.pxs[0], self.pys[0])
-        for i in range(1, len(self.pxs)-2, 2):
-            path.cubicTo(self.pxs[i], self.pys[i],
-                         self.pxs[i+1], self.pys[i+1],
-                         self.pxs[i+2], self.pys[i+2])
+        path.moveTo(self.head)
+        for seg in self.segments:
+            path.cubicTo(seg['c1'],seg['c2'],seg['p2'])
         path.close() if self.closed else None
         return path
 
     def rotate(self, deg: float, origin: Point = None):
-        points =[(self.pxs[i], self.pys[i]) for i in range (0, len(self.pxs))]
+        points = [self.head]
+        points.extend(np.concatenate([[s['c1'], s['c2'], s['p2']] for s in self.segments]))
+        points = list(map(lambda p: (p.x, p.y), points))
         origin = self.center() if origin is None else origin
         origin = (origin.x, origin.y)
         angle = np.deg2rad(deg)
@@ -100,36 +75,72 @@ class Shape:
         o = np.atleast_2d(origin)
         p = np.atleast_2d(points)
         rotpoints = np.squeeze((r.dot(p.T - o.T) + o.T).T)
-        self.pxs = [p[0] for p in rotpoints]
-        self.pys = [p[1] for p in rotpoints]
+        self.head = Point(rotpoints[0][0], rotpoints[0][1])
+        self.segments.clear()
+        for i in range(1, len(rotpoints)-2, 3):
+            c1 = Point(rotpoints[i][0], rotpoints[i][1])
+            c2 = Point(rotpoints[i+1][0], rotpoints[i+1][1])
+            p2 = Point(rotpoints[i+2][0], rotpoints[i+2][1])
+            self.segments.append({'c1':c1, 'c2':c2, 'p2':p2})
         return self
 
-    def center (self) -> Point:
-        x = np.average([self.pxs[i] for i in range (0, len(self.pxs), 3)])
-        y = np.average([self.pys[i] for i in range (0, len(self.pys), 3)])
+    def center(self) -> Point:
+        points = [self.head] + [s['p2'] for s in self.segments]
+        x = np.average([p.x for p in points])
+        y = np.average([p.y for p in points])
         return Point(x,y)
 
-    def subd (self, t: float):
-        points: list[Point] = [Point(self.pxs[i], self.pys[i]) for i in range(0, len(self.pxs))]
-        new_points = [points[0]]
-        for i in range(0, len(self.pxs)-3, 3):
-            if i % 3 == 0:
-                a = points[i]
-                d = points[i+3]
-                b = points[i+1]
-                c = points[i+2]
-
-                e = ((b.cp() - a) * t) + a
-                f = ((c.cp() - b) * t) + b
-                g = ((d.cp() - c) * t) + c
-                h = ((f - e) * t) + e
-                j = ((g - f) * t) + f
-                k = ((j - h) * t) + h
-                new_points.extend([e,h,k])
-                new_points.extend([j,g,d])
-            # a e h k and k j g d
-            #new_points.add(a, e, h, k);
-            #new_points.add(k, j, g, d);
-        self.pxs = [p.x for p in new_points]
-        self.pys = [p.y for p in new_points]
+    def translate(self, p:Point):
+        self.head = self.head + p
+        for seg in self.segments:
+            seg['c1'] = seg['c1'] + p
+            seg['c2'] = seg['c2'] + p
+            seg['p2'] = seg['p2'] + p
         return self
+
+    def cp(self):
+        new_shape = Shape()
+        new_shape.head = self.head.cp()
+        new_shape.segments = [{'c2': s['c2'], 'c1':s['c1'], 'p2':s['p2']}
+                              for s in self.segments]
+        new_shape.closed = self.closed
+        new_shape.zindex = self.zindex
+        new_shape.style = self.style.copy()
+        return new_shape
+
+    def subd(self, t: float):
+        prev_p1 = self.head
+        new_segs = []
+        for seg in self.segments:
+            a = prev_p1
+            d = seg['p2']
+            b = seg['c1']
+            c = seg['c2']
+            e = ((b - a) * t) + a
+            f = ((c - b) * t) + b
+            g = ((d - c) * t) + c
+            h = ((f - e) * t) + e
+            j = ((g - f) * t) + f
+            k = ((j - h) * t) + h
+            new_segs.append({'c1': e, 'c2': h, 'p2': k})
+            new_segs.append({'c1': j, 'c2': g, 'p2': d})
+            prev_p1 = d
+        self.segments = new_segs
+        return self
+
+    def reg(self, canvas: Canvas):
+        canvas.add(self)
+        return self
+
+    def cpoints(self) -> list[Point]:
+        return [self.head] + [seg['p2'] for seg in self.segments]
+
+    def adjust (self):
+        for i in range (1, len(self.segments)):
+            s0 = self.segments[i-1]
+            s1 = self.segments[i]
+            d = Point.distance(s0['c2'], s0['p2'])
+            nc1 = Utils.proj(s0['c2'], s0['p2'], 2*d)
+            self.segments[i]['c1'] = nc1
+        return self
+

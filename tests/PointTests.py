@@ -12,7 +12,7 @@ class PointTests (unittest.TestCase):
         print(tang)
 
     def test_angle (self):
-        a = Point.angle(Point(100,100), Point(50,50))
+        a = Point.angle(Point(50,50), Point(100,100))
         self.assertEqual(a, 45.0)
 
     def test_point_at (self):
@@ -25,3 +25,7 @@ class PointTests (unittest.TestCase):
         self.assertEqual((10,10), Point.interpolate(Point(0,0), Point(20,20)))
         self.assertEqual((-5,-5), Point.interpolate(Point(0,0), Point(-10,-10)))
         self.assertEqual((10, 30), Point.interpolate(Point(10,10), Point(10,50)))
+
+    def test_rotate (self):
+        self.assertEqual((0,100), Point.rotate(Point(100,0), Point(0,0), 90))
+        self.assertEqual((-100,0), Point.rotate(Point(100,0), Point(0,0), 180))

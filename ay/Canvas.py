@@ -5,15 +5,18 @@ import uuid
 import skia
 from colour import Color
 
+from ay import Shapes
 from ay.Gens import Gens
 from ay.Point import Point
 from ay.Shape import Shape
-from ay.utils.Colors import Colors
+import ay.utils.Colors
+from ay.Layout import Layout
 
 
 class Canvas ():
 
-    def __init__(self, width=1000, height=1000, seed=random.randint(0,10000)):
+    def __init__(self, width=1000, height=1000, seed=random.randint(0,10000),
+                 color_seed=random.randint(0,10000)):
         self.seed = seed
         self.surface: skia.Surface = skia.Surface(width, height)
         self.canvas: skia.Canvas = self.surface.getCanvas()
@@ -21,8 +24,11 @@ class Canvas ():
         self.items: list[Shape] = []
         print (">> using seed: {}".format(self.seed))
         self.rnd = random.default_rng(seed)
+        self.color_rnd = random.default_rng(seed)
         self.ft = Gens(self.rnd)
-        self.colors = Colors()
+        self.drawn = False
+        self.colors = ay.utils.Colors
+        self.layout = Layout(self.seed)
 
     def rnd(self):
         #return self.rand.random()
@@ -65,8 +71,21 @@ class Canvas ():
                 paint.setColor(i.style['stroke'])
                 paint.setAntiAlias(True)
                 self.canvas.drawPath(i.draw(), paint)
+        self.drawn = True
+
+    def with_frame (self, color, width: int):
+        Shapes.rect(Point(0, 0), self.surface.width(), width)\
+            .fill(color).reg(self)
+        Shapes.rect(Point(self.surface.width() - width, 0), width, self.surface.height())\
+            .fill(color).reg(self)
+        Shapes.rect(Point(0, self.surface.height() - width), self.surface.width(), width)\
+            .fill(color).reg(self)
+        Shapes.rect(Point(0, 0), width, self.surface.height()).fill(color).reg(self)
+        return self
 
     def save_file(self, filename = uuid.uuid4().hex[:8]):
-        print(">> Saving to file: " + '' + str(filename) + '.png ...')
+        filename = filename if ".png" in filename else filename + ".png"
+        self.draw() if not self.drawn else None
+        print(">> Saving to file: " + '' + str(filename))
         snapshot = self.surface.makeImageSnapshot()
-        snapshot.save(filename + ".png", skia.kPNG)
+        snapshot.save(filename, skia.kPNG)
