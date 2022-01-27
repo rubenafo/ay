@@ -1,3 +1,4 @@
+
 import colour
 import numpy as np
 from skia import Path, Color4f
@@ -138,9 +139,13 @@ class Shape:
     def adjust (self):
         for i in range (1, len(self.segments)):
             s0 = self.segments[i-1]
-            s1 = self.segments[i]
             d = Point.distance(s0['c2'], s0['p2'])
             nc1 = Utils.proj(s0['c2'], s0['p2'], 2*d)
             self.segments[i]['c1'] = nc1
         return self
 
+    def noise (self, func):
+        self.head = func(self.head, is_seg=True)
+        for seg in self.segments:
+            func(seg, is_seg=True)
+        return self

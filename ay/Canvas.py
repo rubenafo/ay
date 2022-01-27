@@ -27,17 +27,15 @@ class Canvas ():
         self.color_rnd = random.default_rng(seed)
         self.ft = Gens(self.rnd)
         self.drawn = False
+        self.__init_accessors()
+
+    def __init_accessors (self):
+        """"
+        Set the accessors to use libraries from a canvas instance
+        """
         self.colors = ay.utils.Colors
         self.layout = Layout(self.seed)
-
-    def rnd(self):
-        #return self.rand.random()
-        return random.random()
-
-    def rpoint (self, a:int = 0, b:int = 0):
-        a = self.surface.width() if a == 0 else a
-        b = self.surface.height() if b == 0 else b
-        return Point(self.rnd()*a, self.rnd()*b)
+        self.shapes = Shapes
 
     def add (self, s: Shape):
         self.items.append(s)
