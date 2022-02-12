@@ -1,5 +1,7 @@
 import numpy.random
 from numpy import random
+
+from ay.Shape import Shape
 from ay.plist import plist
 
 class Gens:

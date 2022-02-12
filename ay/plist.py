@@ -30,7 +30,7 @@ class plist (list[Point]):
         start = self.rnd.integers(0, len(self) - size)
         return plist(self[start:start + size])
 
-    def pairs (self) -> list[Point]:
+    def pairs (self, link=0) -> list[Point]:
         return plist(zip(self[::1], self[1::1]))
 
     def second(self) -> Point:
@@ -49,3 +49,10 @@ class plist (list[Point]):
         dists = [Point.distance(p, pt) for pt in self if p != pt]
         cl = max(dists)
         return self[dists.index(cl)]
+
+    def chunks (self, size=1, overlap=0):
+        chks = [self[i:i+size] for i in range(0, len(self)-size+1, size)]
+        if overlap > 0:
+            for i in range(1, len(chks)):
+                chks[i][0:0] = chks[i-1][-overlap:]
+        return plist(chks)
