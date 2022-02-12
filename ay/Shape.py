@@ -145,7 +145,7 @@ class Shape:
         return self
 
     def noise (self, func):
-        self.head = func(self.head, is_seg=True)
-        for seg in self.segments:
-            func(seg, is_seg=True)
+        self.head = func(self, self.head)
+        for index, seg in enumerate(self.segments):
+            func(index, seg)
         return self
