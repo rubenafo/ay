@@ -6,7 +6,7 @@ from ay.plist import plist
 
 class Brush:
 
-    def __init__(self, points):
+    def __init__(self, points, chunks=1):
         self.center = points
         self.left = []
         self.right = []
@@ -58,6 +58,7 @@ class Brush:
     def linear_brush (self, width: float):
         contour = Brush(self.center).contour_points(self.center, width)
         return self.linear(contour[0], contour[1])
+
 
     def rectangles_brush (self, h) -> list[Shape]:
         shapes = []
